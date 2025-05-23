@@ -1,4 +1,4 @@
-#TRABALHOS PRÁTICOS 
+# TRABALHOS PRÁTICOS
 
 **Primeiro Trabalho Prático:**
 
@@ -154,4 +154,102 @@ main()
 
 c)
 
-```´
+```
+import ipaddress
+
+def verificar_rede(entrada):
+    try:
+        rede = ipaddress.IPv4Network(entrada, strict=False)
+        
+        print("\nAnálise da rede: %s" %entrada)
+        print("IP de rede:     %s" %rede.network_address)
+        print("Broadcast:      %s "%rede.broadcast_address)
+        print("Máscara:         %s " %rede.netmask)
+        print("Hosts válidos:")
+        for host in rede.hosts():
+            print("  %s" %host)
+    except ValueError:
+        print("❌ Entrada inválida. Use formato IP/Máscara, ex: 192.168.0.10/24")
+
+def main():
+ entrada = input("Digite o IP com máscara (ex: 192.168.1.10/24): ")
+ verificar_rede(entrada)
+main()
+```
+
+**Terceira Atividade Prática**
+
+a)
+
+```
+import socket
+import threading
+
+def is_host_up(ip):
+    try:
+        socket.create_connection((ip, 80), timeout=0.5)
+        print(f'{ip} está ativo')
+    except:
+        return -1
+
+threads = []
+
+for i in range(1, 255):
+    ip = f'192.168.1.{i}'
+    t = threading.Thread(target=is_host_up, args=(ip,))
+    threads.append(t)
+    t.start()
+
+
+for t in threads:
+    t.join()
+
+def main():
+    ip= input( "DIGITE UM IP COM A MASCARA DE REDE: ")
+    is_host_up(ip)
+main()
+```
+
+
+**Quarta Atividade Prática** 
+
+```
+import socket
+import ipaddress
+import threading
+import datetime
+
+def verificar_ip(ip):
+    resultado = socket_testar_conexao(str(ip), 80)
+    if resultado:
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] {ip} está ativo")
+
+
+def socket_testar_conexao(ip, porta):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(0.5)
+    retorno = s.connect_ex((ip, porta))  # 0 = sucesso
+    s.close()
+    return retorno == 0
+
+def main():
+    entrada = input("Digite a rede no formato CIDR (ex: 192.168.0.0/28): ")
+
+
+    rede = ipaddress.IPv4Network(entrada, strict=False)
+
+    print(f"\nVerificando IPs ativos na rede {rede}...\n")
+
+    threads = []
+
+    for ip in rede.hosts():
+     t = threading.Thread(target=verificar_ip, args=(ip,))
+     threads.append(t)
+     t.start()
+
+    for t in threads:
+     t.join()
+
+```
+
