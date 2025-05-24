@@ -182,74 +182,81 @@ main()
 a)
 
 ```
-import socket
+import os
 import threading
 
 def is_host_up(ip):
-    try:
-        socket.create_connection((ip, 80), timeout=0.5)
+    # Para Windows: -n 1 = 1 pacote, -w 100 = timeout de 100ms, > nul = suprimir saída
+    response = os.system(f"ping -n 1 -w 100 {ip} > nul")
+    if response == 0:
         print(f'{ip} está ativo')
-    except:
-        return -1
-
-threads = []
-
-for i in range(1, 255):
-    ip = f'192.168.1.{i}'
-    t = threading.Thread(target=is_host_up, args=(ip,))
-    threads.append(t)
-    t.start()
-
-
-for t in threads:
-    t.join()
 
 def main():
-    ip= input( "DIGITE UM IP COM A MASCARA DE REDE: ")
-    is_host_up(ip)
-main()
+    base_ip = input("Digite a base do IP (ex: 192.168.1.): ").strip()
+
+    if not base_ip.endswith('.'):
+        print("IP base inválido. Deve terminar com ponto, ex: 192.168.1.")
+        return
+
+    threads = []
+    for i in range(1, 255):
+        ip = f'{base_ip}{i}'
+        t = threading.Thread(target=is_host_up, args=(ip,))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+if __name__ == "__main__":
+    main()
+
 ```
 
 
 **Quarta Atividade Prática** 
 
-```
-import socket
+```import socket
 import ipaddress
 import threading
 import datetime
 
 def verificar_ip(ip):
-    resultado = socket_testar_conexao(str(ip), 80)
-    if resultado:
+    if testar_conexao_socket(str(ip), 80):
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f"[{timestamp}] {ip} está ativo")
 
-
-def socket_testar_conexao(ip, porta):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(0.5)
-    retorno = s.connect_ex((ip, porta))  # 0 = sucesso
-    s.close()
-    return retorno == 0
+def testar_conexao_socket(ip, porta):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)
+            retorno = s.connect_ex((ip, porta))  # 0 = sucesso
+            return retorno == 0
+    except Exception:
+        return False
 
 def main():
-    entrada = input("Digite a rede no formato CIDR (ex: 192.168.0.0/28): ")
+    entrada = input("Digite a rede no formato CIDR (ex: 192.168.0.0/28): ").strip()
 
-
-    rede = ipaddress.IPv4Network(entrada, strict=False)
+    try:
+        rede = ipaddress.IPv4Network(entrada, strict=False)
+    except ValueError:
+        print("Formato inválido. Use algo como 192.168.0.0/24")
+        return
 
     print(f"\nVerificando IPs ativos na rede {rede}...\n")
 
     threads = []
 
     for ip in rede.hosts():
-     t = threading.Thread(target=verificar_ip, args=(ip,))
-     threads.append(t)
-     t.start()
+        t = threading.Thread(target=verificar_ip, args=(ip,))
+        threads.append(t)
+        t.start()
 
     for t in threads:
-     t.join()
+        t.join()
+
+main()
 
 ```
 
